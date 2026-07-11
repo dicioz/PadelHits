@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		6B3865B92F7533C700F797BB /* PadelHits Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 6B3865B82F7533C700F797BB /* PadelHits Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		8C27652C3002608A0048802C /* ObservalObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4976E33002505D00DF6D74 /* ObservalObject.swift */; };
+		8C276532300274990048802C /* PadelhitsModel.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 8C276531300274990048802C /* PadelhitsModel.mlmodel */; };
+		8C276533300274990048802C /* PadelhitsModel.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 8C276531300274990048802C /* PadelhitsModel.mlmodel */; };
+		8C4976E53002506600DF6D74 /* ObservalObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4976E33002505D00DF6D74 /* ObservalObject.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -37,6 +41,8 @@
 /* Begin PBXFileReference section */
 		6B3865AB2F7533C500F797BB /* PadelHits.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PadelHits.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6B3865B82F7533C700F797BB /* PadelHits Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PadelHits Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		8C276531300274990048802C /* PadelhitsModel.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = PadelhitsModel.mlmodel; sourceTree = "<group>"; };
+		8C4976E33002505D00DF6D74 /* ObservalObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObservalObject.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +81,8 @@
 			children = (
 				6B3865AD2F7533C500F797BB /* PadelHits */,
 				6B3865BC2F7533C700F797BB /* PadelHits Watch App */,
+				8C4976E33002505D00DF6D74 /* ObservalObject.swift */,
+				8C276531300274990048802C /* PadelhitsModel.mlmodel */,
 				6B3865AC2F7533C500F797BB /* Products */,
 			);
 			sourceTree = "<group>";
@@ -197,6 +205,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8C27652C3002608A0048802C /* ObservalObject.swift in Sources */,
+				8C276532300274990048802C /* PadelhitsModel.mlmodel in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -204,6 +214,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8C276533300274990048802C /* PadelhitsModel.mlmodel in Sources */,
+				8C4976E53002506600DF6D74 /* ObservalObject.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,10 +1,12 @@
 import SwiftUI
 import CoreMotion
+import WatchConnectivity
 
 struct ContentView: View {
     
     private let motion = CMMotionManager()
     private let updateInterval = 1.0 / 50.0
+    @State private var timeStartSession: Double = 0.0
     
     @State private var isRecording = false
     @State private var sampleCount = 0
@@ -102,7 +104,7 @@ struct ContentView: View {
             statusMessage = "Sensori non disponibili"
             return
         }
-        
+        timeStartSession = Date().timeIntervalSince1970
         csvLines = []
         sampleCount = 0
         isRecording = true
@@ -159,6 +161,8 @@ struct ContentView: View {
             statusMessage = "Salvato ✓ (\(savedFiles.count) totali)"
             csvLines = []
             sampleCount = 0
+            let metadati: [String: Any] = ["Inizio sessione": timeStartSession]
+            WCSession.default.transferFile(fileURL, metadata: metadati) // Questo metodo prende l'URL del file sul disco del Watch e lo mette nella famosa coda di sistema in background che si occuperà della spedizione asincrona
         } catch {
             statusMessage = "Errore: \(error.localizedDescription)"
         }

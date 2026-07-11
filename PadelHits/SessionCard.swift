@@ -6,11 +6,11 @@ struct SessionCard: View {
     var durata: String
     var colpiDritto: Int
     var colpiRovescio: Int
-    var colpiVibora: Int
+    // var colpiVibora: Int
     
     // calcola il colpo con il valore massimo per proporzionare le barre
     private var maxColpi: Int {
-        max(colpiDritto, max(colpiRovescio, colpiVibora))
+        max(colpiDritto, colpiRovescio)
     }
     
     var body: some View {
@@ -39,7 +39,7 @@ struct SessionCard: View {
             VStack (spacing: 16){
                 StatRow(etichetta: "Dritto", valore: colpiDritto, massimo: maxColpi, colore: .blue)
                 StatRow(etichetta: "Rovescio", valore: colpiRovescio, massimo: maxColpi, colore: .green)
-                StatRow(etichetta: "Vibora", valore: colpiVibora, massimo: maxColpi, colore: .orange)
+                //StatRow(etichetta: "Vibora", valore: colpiVibora, massimo: maxColpi, colore: .orange)
             }
         }
         .padding(20)
