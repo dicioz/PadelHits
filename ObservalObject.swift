@@ -11,6 +11,7 @@ import WatchConnectivity
 import Combine
 import WatchConnectivity
 import CoreML
+import SwiftData
 
 class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
     static let shared = ConnectivityManager()
@@ -19,15 +20,9 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
     @Published var ultimaSessioneRicevuta: [String: Any]?
     @Published var conteggioColpi: [String: Int] = [:]
     @Published var colpiTotali: Int = 0
-    @Published var storicoSessioni: [SessionePadel] = []
-    // Questa variabile calcola le ore totali automaticamente
-    var oreGiocateTotali: Float {
-        // Raccogliamo tutti i secondi dalle sessioni nello storico
-        let secondiComplessivi = storicoSessioni.reduce(0.0) { $0 + $1.secondiTotali } //reduce somma i valori all'intenro dell'array velocemente
-        // Trasformiamo in ore (3600 secondi = 1 ora) e restituiamo un Float
-        return Float(secondiComplessivi / 3600.0)
-    }
-    
+    // @Published var storicoSessioni: [SessionePadel] = []
+    @Published var sessioneDaSalvare: SessionePadel? = nil
+
     override init() {
         super.init()
         if WCSession.isSupported() {
@@ -135,10 +130,10 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
                         statoMemoria = predizione.stateOut
                         let colpoRilevato = predizione.label
                         
-                        print("🎾 PREDIZIONE IA: \(colpoRilevato)")
-                        
-                        if colpoRilevato == "Dritto" { drittoLocali += 1 }
-                        else if colpoRilevato == "Rovescio" { rovescioLocali += 1 }
+                        //print("🎾 PREDIZIONE IA: \(colpoRilevato)")
+                        let colpoPulito = colpoRilevato.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                        if colpoRilevato == "dritto" { drittoLocali += 1 }
+                        else if colpoRilevato == "rovescio" { rovescioLocali += 1 }
                         totaliLocali += 1
                         
                         DispatchQueue.main.async {
@@ -161,7 +156,7 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
                         durata: durataFormattata,
                         secondiTotali: durataInSecondi
                     )
-                    self.storicoSessioni.insert(nuovaSessione, at: 0)
+                    self.sessioneDaSalvare = nuovaSessione
                 }
                 
             } catch {
@@ -173,6 +168,7 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
     func resettaSessione() {
         self.ultimaSessioneRicevuta = nil
     }
+
     
     
     // MARK: - Delegati Obbligatori
@@ -185,7 +181,8 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
 
 // MARK: - Funzione a parte
 
-struct SessionePadel: Identifiable {
+
+/*struct SessionePadel: Identifiable {
     let id = UUID()
     let orario: String
     let colpiTotali: Int
@@ -193,4 +190,26 @@ struct SessionePadel: Identifiable {
     let rovescio: Int
     let durata: String
     let secondiTotali: Double
+}*/
+
+@Model
+class SessionePadel {
+    // l'id lo genera automaticamente swiftdata
+    var orario: String
+    var colpiTotali: Int
+    var dritto: Int
+    var rovescio: Int
+    var durata: String
+    var secondiTotali: Double
+    
+    init(orario: String, colpiTotali: Int, dritto: Int, rovescio: Int, durata: String, secondiTotali: Double) {
+        self.orario = orario
+        self.colpiTotali = colpiTotali
+        self.dritto = dritto
+        self.rovescio = rovescio
+        self.durata = durata
+        self.secondiTotali = secondiTotali
+    }
 }
+
+

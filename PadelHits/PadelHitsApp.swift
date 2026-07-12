@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct PadelHitsApp: App {
@@ -13,5 +14,7 @@ struct PadelHitsApp: App {
         WindowGroup {
             ContentView()
         }
+        // per preparare il database ad ospitare questi tipi di dati
+        .modelContainer(for: SessionePadel.self)
     }
 }
