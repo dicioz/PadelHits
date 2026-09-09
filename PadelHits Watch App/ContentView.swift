@@ -4,8 +4,8 @@ import WatchConnectivity
 
 struct ContentView: View {
     private var connectivityManager = WatchConnectivityManager.shared
-    private let motion = CMMotionManager()
-    private let updateInterval = 1.0 / 50.0
+    private let motion = CMMotionManager() // per accedere ai sensori
+    private let updateInterval = 1.0 / 50.0 // ottengo 50 campioni al secondo
     @State private var timeStartSession: Double = 0.0
     
     @State private var isRecording = false
@@ -110,7 +110,7 @@ struct ContentView: View {
         isRecording = true
         statusMessage = "Registrazione..."
         
-        csvLines.append("timestamp,ax,ay,az,gx,gy,gz")
+        csvLines.append("timestamp,ax,ay,az,gx,gy,gz") // metto dati in un array e alla fine genero csv da mandare ad iphone
         
         motion.deviceMotionUpdateInterval = updateInterval
         motion.startDeviceMotionUpdates(to: .main) { data, error in
