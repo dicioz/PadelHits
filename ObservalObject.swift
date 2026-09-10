@@ -15,7 +15,7 @@ import SwiftData
 
 // aspetta i file dal watch in background, legge il csv e poi prepara i dati per la rete neurale, inferenza e prepara oggetto per il db
 class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
-    static let shared = ConnectivityManager()
+    static let shared = ConnectivityManager() // garantisce una unica istanza condivida in tutt l'a'pp
     
     // Questa variabile conterrà la sessione ricevuta e notificherà SwiftUI
     @Published var ultimaSessioneRicevuta: [String: Any]?
@@ -74,7 +74,7 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
                 var bloccoGx = [Double](); var bloccoGy = [Double](); var bloccoGz = [Double]()
                 
                 let modello = try PadelhitsModel(configuration: MLModelConfiguration())
-                let contenutoCompleto = try String(contentsOf: urlDestinazione, encoding: .utf8)
+                let contenutoCompleto = try String(contentsOf: urlDestinazione, encoding: .utf8) // se file grande meglio usare InputStream
                 let righe = contenutoCompleto.components(separatedBy: "\n")
                 
                 // Estrazione dell'orario dal nome del file
@@ -88,6 +88,7 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
                     let formatter = DateFormatter()
                     formatter.dateFormat = "dd/MM/yy HH:mm"
                     orarioFormattato = formatter.string(from: data)
+                    // estratto dai metadata associato al trasferimento
                     if let timestampInizio = file.metadata?["inizioSessione"] as? Double {
                         // Calcoliamo la differenza in secondi e la trasformiamo in minuti
                         let secondiTrascorsi = timestampFine - timestampInizio
@@ -150,7 +151,7 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
                     }
                 }
                 
-                // Salvataggio nello storico usando il modello dati
+                // Salvataggio nello storico usando il modello dati, si usa il thread principale in quanto le varibaili published possono essere modificate solo da quel thread
                 DispatchQueue.main.async {
                     let nuovaSessione = SessionePadel(
                         orario: orarioFormattato,
