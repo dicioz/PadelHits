@@ -9,7 +9,7 @@ import SwiftData
 struct ContentView: View {
     @ObservedObject var manager = ConnectivityManager.shared
     @Environment(\.modelContext) private var context
-    @Query var storicoSessioniDB: [SessionePadel]
+    @Query var storicoSessioniDB: [SessionePadel] // ottengo tuttti i record si sessionPadel salvati, se db cambia, ui si aggiorna
     // Questa variabile calcola le ore totali automaticamente
     var oreGiocateTotali: Float {
         // Raccogliamo tutti i secondi dalle sessioni nello storico
@@ -57,7 +57,7 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding()
-        
+        // quando viene creato un nuovo oggetto sessionPadel questo viene aggiunto nel db
         .onChange(of: manager.sessioneDaSalvare) { vecchiaSessione, nuovaSessione in
             if let sessione = nuovaSessione {
                 // salva nel db
