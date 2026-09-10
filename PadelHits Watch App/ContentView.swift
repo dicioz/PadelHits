@@ -162,7 +162,7 @@ struct ContentView: View {
             csvLines = []
             sampleCount = 0
             let metadati: [String: Any] = ["inizioSessione": timeStartSession]
-            WCSession.default.transferFile(fileURL, metadata: metadati) // Questo metodo prende l'URL del file sul disco del Watch e lo mette nella famosa coda di sistema in background che si occuperà della spedizione asincrona
+            WCSession.default.transferFile(fileURL, metadata: metadati) // Questo metodo prende l'URL del file sul disco del Watch e lo mette nella coda di sistema in background che si occuperà della spedizione asincrona
         } catch {
             statusMessage = "Errore: \(error.localizedDescription)"
         }
