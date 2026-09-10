@@ -13,6 +13,7 @@ import WatchConnectivity
 import CoreML
 import SwiftData
 
+// aspetta i file dal watch in background, legge il csv e poi prepara i dati per la rete neurale, inferenza e prepara oggetto per il db
 class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
     static let shared = ConnectivityManager()
     
@@ -49,7 +50,8 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
             print("Nuovi dati ricevuti e pubblicati per SwiftUI: \(userInfo)")
         }
     }
-    
+
+    // avviata quando l'iphone ha scaricato il file dal watch
     func session(_ session: WCSession, didReceive file: WCSessionFile) {
             print("Un nuovo file CSV è arrivato dal Watch!")
             
@@ -104,7 +106,8 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
                 var drittoLocali = 0
                 var rovescioLocali = 0
                 var totaliLocali = 0
-                
+
+                // riempie blocchi per ogni asse (x, y...)
                 for i in 1..<righe.count {
                     let rigaCorrente = righe[i]
                     if rigaCorrente.isEmpty { continue }
@@ -118,15 +121,16 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
                         bloccoGy.append(Double(colonne[5]) ?? 0.0)
                         bloccoGz.append(Double(colonne[6]) ?? 0.0)
                     }
-                    
+                    // quando lunghezza blocchi è 100 (2 sec a 50hz), array sono converitti in array nativi per coreml e si invoca il modelllo
                     if bloccoAx.count == 100 {
                         guard let mlAx = creaMultiArray(da: bloccoAx), let mlAy = creaMultiArray(da: bloccoAy),
                               let mlAz = creaMultiArray(da: bloccoAz), let mlGx = creaMultiArray(da: bloccoGx),
                               let mlGy = creaMultiArray(da: bloccoGy), let mlGz = creaMultiArray(da: bloccoGz) else {
                             continue
                         }
-                        
+                        // utilizzo LSTM (long short term memory)
                         let predizione = try modello.prediction(ax: mlAx, ay: mlAy, az: mlAz, gx: mlGx, gy: mlGy, gz: mlGz, stateIn: statoMemoria!)
+                        // stateout per avere una idea di quello che stava succedendo nella finestra attuale
                         statoMemoria = predizione.stateOut
                         let colpoRilevato = predizione.label
                         
@@ -140,7 +144,7 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
                             self.conteggioColpi[colpoRilevato, default: 0] += 1
                             self.colpiTotali += 1
                         }
-                        
+                        // svuoto blocchi, in quanto non necessari per lstm
                         bloccoAx.removeAll(); bloccoAy.removeAll(); bloccoAz.removeAll()
                         bloccoGx.removeAll(); bloccoGy.removeAll(); bloccoGz.removeAll()
                     }
