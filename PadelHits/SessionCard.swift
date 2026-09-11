@@ -9,9 +9,9 @@ struct SessionCard: View {
     // var colpiVibora: Int
     
     // calcola il colpo con il valore massimo per proporzionare le barre
-    private var maxColpi: Int {
-        max(colpiDritto, colpiRovescio)
-    }
+    //private var maxColpi: Int {
+      //  max(colpiDritto, colpiRovescio)
+    //}
     
     var body: some View {
         VStack (spacing: 24) {
@@ -37,8 +37,8 @@ struct SessionCard: View {
                     .clipShape(Capsule())
             }
             VStack (spacing: 16){
-                StatRow(etichetta: "Dritto", valore: colpiDritto, massimo: maxColpi, colore: .blue)
-                StatRow(etichetta: "Rovescio", valore: colpiRovescio, massimo: maxColpi, colore: .green)
+                StatRow(etichetta: "Dritto", valore: colpiDritto, massimo: 100, colore: .blue)
+                StatRow(etichetta: "Rovescio", valore: colpiRovescio, massimo: 100, colore: .green)
                 //StatRow(etichetta: "Vibora", valore: colpiVibora, massimo: maxColpi, colore: .orange)
             }
         }

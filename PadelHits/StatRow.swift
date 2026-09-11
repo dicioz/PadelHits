@@ -36,11 +36,11 @@ struct StatRow: View {
             }
             .frame(height: 10)
             
-            Text("\(valore)")
+            Text("\(valore)%")
                 .font(.headline)
                 .fontWeight(.bold)
                 .foregroundStyle(.white)
-                .frame(width: 30, alignment: .trailing)
+                .frame(minWidth: 30, alignment: .trailing)
         }
     }
     private func calcolaLarghezza(larghezzaTotale: CGFloat) -> CGFloat {

@@ -10,13 +10,18 @@ struct ContentView: View {
     @ObservedObject var manager = ConnectivityManager.shared
     @Environment(\.modelContext) private var context
     @Query var storicoSessioniDB: [SessionePadel] // ottengo tuttti i record si sessionPadel salvati, se db cambia, ui si aggiorna
-    // Questa variabile calcola le ore totali automaticamente
-    var oreGiocateTotali: Float {
+    var colpiTotali: Int {
+        storicoSessioniDB.reduce(0) { totaleParziale, sessione in
+                totaleParziale + sessione.colpiTotali
+        }
+    }
+    var minutiGiocatiTotali: Int {
         // Raccogliamo tutti i secondi dalle sessioni nello storico
         let secondiComplessivi = storicoSessioniDB.reduce(0.0) { $0 + $1.secondiTotali } //reduce somma i valori all'intenro dell'array velocemente
         // Trasformiamo in ore (3600 secondi = 1 ora) e restituiamo un Float
-        return Float(secondiComplessivi / 3600.0)
+        return Int(secondiComplessivi / 60)
     }
+    
     
     var body: some View {
         VStack (alignment: .leading, spacing: 4){
@@ -32,11 +37,11 @@ struct ContentView: View {
             }
             
             HStack (alignment: .center, spacing: 15){
-                StatCard(titolo: "Sessioni", valore: Float(storicoSessioniDB.count))
+                StatCard(titolo: "Sessioni", valore: storicoSessioniDB.count)
                 Spacer()
-                StatCard(titolo: "Colpi tot.", valore: Float(manager.colpiTotali))
+                StatCard(titolo: "Colpi tot.", valore: colpiTotali)
                 Spacer()
-                StatCard(titolo: "Ore giocate", valore: oreGiocateTotali)
+                StatCard(titolo: "Minuti giocati", valore: minutiGiocatiTotali)
             }
             .padding(.horizontal)
             .padding(.vertical)
@@ -47,8 +52,19 @@ struct ContentView: View {
                         Text("Nessuna sessione ancora registrata")
                     } else {
                         ForEach(storicoSessioniDB) { sessione in
+                            // per evitare che l'app vada in crash se i colpi totali sono 0
+                            let colpiTot = sessione.colpiTotali > 0 ? Double(sessione.colpiTotali) : 1.0
+
+                            // Ora la divisione avviene tra due Double (es. 15.0 / 30.0 = 0.5)
+                            let percDritti = Int((Double(sessione.dritto) / colpiTot) * 100)
+                            let percRovesci = sessione.colpiTotali > 0 ? (100 - percDritti) : 0
+
                             SessionCard(
-                                titolo: "Session Padel", dataOra: sessione.orario, durata: sessione.durata, colpiDritto: sessione.dritto, colpiRovescio: sessione.rovescio
+                                titolo: "Session Padel",
+                                dataOra: sessione.orario,
+                                durata: sessione.durata,
+                                colpiDritto: percDritti,
+                                colpiRovescio: percRovesci
                             )
                         }
                     }

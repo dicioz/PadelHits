@@ -8,7 +8,7 @@ import SwiftUI
 
 struct StatCard: View {
     var titolo: String
-    var valore: Float = 0
+    var valore: Int = 0
     var body: some View {
         VStack (){
             Text(titolo)
