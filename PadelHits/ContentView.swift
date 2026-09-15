@@ -78,6 +78,7 @@ struct ContentView: View {
                                 titolo: "Session Padel",
                                 dataOra: sessione.orario,
                                 durata: sessione.durata,
+                                colpiTotali: sessione.colpiTotali,
                                 colpiDritto: percDritti,
                                 colpiRovescio: percRovesci
                             )

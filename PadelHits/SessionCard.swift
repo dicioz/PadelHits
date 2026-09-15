@@ -4,6 +4,7 @@ struct SessionCard: View {
     var titolo: String
     var dataOra: String
     var durata: String
+    var colpiTotali: Int
     var colpiDritto: Int
     var colpiRovescio: Int
     // var colpiVibora: Int
@@ -26,15 +27,27 @@ struct SessionCard: View {
                         .foregroundStyle(.gray)
                 }
                 Spacer()
-                
-                Text(durata)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.black.opacity(0.3))
-                    .clipShape(Capsule())
+
+                VStack (alignment: .trailing, spacing: 6) {
+                    Text(durata)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.black.opacity(0.3))
+                        .clipShape(Capsule())
+
+                    // Numero totale di colpi della singola sessione
+                    Text("\(colpiTotali) colpi")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.black.opacity(0.3))
+                        .clipShape(Capsule())
+                }
             }
             VStack (spacing: 16){
                 StatRow(etichetta: "Dritto", valore: colpiDritto, massimo: 100, colore: .blue)
