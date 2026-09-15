@@ -15,11 +15,26 @@ struct ContentView: View {
                 totaleParziale + sessione.colpiTotali
         }
     }
-    var minutiGiocatiTotali: Int {
+    var tempoGiocatoFormattato: String {
         // Raccogliamo tutti i secondi dalle sessioni nello storico
         let secondiComplessivi = storicoSessioniDB.reduce(0.0) { $0 + $1.secondiTotali } //reduce somma i valori all'intenro dell'array velocemente
-        // Trasformiamo in ore (3600 secondi = 1 ora) e restituiamo un Float
-        return Int(secondiComplessivi / 60)
+        // Convertiamo in interi (coerente con il resto del codice che usa Int())
+        let secondiTotali = Int(secondiComplessivi)
+
+        if secondiTotali >= 3600 {
+            // Da 1 ora in su: mostriamo ore e minuti (es. "1h 23m")
+            let ore = secondiTotali / 3600
+            let minuti = (secondiTotali % 3600) / 60
+            return "\(ore)h \(minuti)m"
+        } else if secondiTotali >= 60 {
+            // Da 1 minuto a meno di 1 ora: minuti e secondi (es. "23m 45s")
+            let minuti = secondiTotali / 60
+            let secondi = secondiTotali % 60
+            return "\(minuti)m \(secondi)s"
+        } else {
+            // Meno di 1 minuto: solo secondi (es. "45s")
+            return "\(secondiTotali)s"
+        }
     }
     
     
@@ -41,7 +56,7 @@ struct ContentView: View {
                 Spacer()
                 StatCard(titolo: "Colpi tot.", valore: colpiTotali)
                 Spacer()
-                StatCard(titolo: "Minuti giocati", valore: minutiGiocatiTotali)
+                StatCard(titolo: "Minuti giocati", valoreTesto: tempoGiocatoFormattato)
             }
             .padding(.horizontal)
             .padding(.vertical)
