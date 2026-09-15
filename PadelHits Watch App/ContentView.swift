@@ -94,6 +94,9 @@ struct ContentView: View {
         }
         .onAppear {
             loadSavedFiles()
+            // Chiede il permesso HealthKit in anticipo, così la prima registrazione
+            // può avviare subito la workout session per l'extended runtime.
+            WorkoutSessionManager.shared.requestAuthorization()
         }
     }
     
@@ -109,6 +112,9 @@ struct ContentView: View {
         sampleCount = 0
         isRecording = true
         statusMessage = "Registrazione..."
+
+        // Avvia la workout session così i sensori continuano anche a schermo spento/AOD
+        WorkoutSessionManager.shared.start()
         
         csvLines.append("timestamp,ax,ay,az,gx,gy,gz") // metto dati in un array e alla fine genero csv da mandare ad iphone
         
@@ -133,6 +139,7 @@ struct ContentView: View {
     
     func stopRecording() {
         motion.stopDeviceMotionUpdates()
+        WorkoutSessionManager.shared.stop()
         isRecording = false
         statusMessage = "Salvataggio..."
         saveCSV()
