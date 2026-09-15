@@ -70,6 +70,8 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
                 print("File salvato con successo su iPhone in: \(urlDestinazione.path)")
                 
                 var statoMemoria = try? MLMultiArray(shape: [400], dataType: .double)
+                // Ora questi array NON vengono più svuotati ogni 100 campioni:
+                // raccolgono TUTTI i campioni del CSV, così dopo posso farci scorrere sopra la finestra.
                 var bloccoAx = [Double](); var bloccoAy = [Double](); var bloccoAz = [Double]()
                 var bloccoGx = [Double](); var bloccoGy = [Double](); var bloccoGz = [Double]()
                 
@@ -108,11 +110,12 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
                 var rovescioLocali = 0
                 var totaliLocali = 0
 
-                // riempie blocchi per ogni asse (x, y...)
+                // PRIMO PASSO: leggo tutte le righe del CSV e riempio i blocchi con TUTTI i campioni.
+                // (Prima invece svuotavo i blocchi ogni 100 campioni; ora mi servono interi per la sliding window.)
                 for i in 1..<righe.count {
                     let rigaCorrente = righe[i]
                     if rigaCorrente.isEmpty { continue }
-                    
+
                     let colonne = rigaCorrente.split(separator: ",")
                     if colonne.count >= 7 {
                         bloccoAx.append(Double(colonne[1]) ?? 0.0)
@@ -122,33 +125,86 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
                         bloccoGy.append(Double(colonne[5]) ?? 0.0)
                         bloccoGz.append(Double(colonne[6]) ?? 0.0)
                     }
-                    // quando lunghezza blocchi è 100 (2 sec a 50hz), array sono converitti in array nativi per coreml e si invoca il modelllo
-                    if bloccoAx.count == 100 {
-                        guard let mlAx = creaMultiArray(da: bloccoAx), let mlAy = creaMultiArray(da: bloccoAy),
-                              let mlAz = creaMultiArray(da: bloccoAz), let mlGx = creaMultiArray(da: bloccoGx),
-                              let mlGy = creaMultiArray(da: bloccoGy), let mlGz = creaMultiArray(da: bloccoGz) else {
-                            continue
-                        }
-                        // utilizzo LSTM (long short term memory)
-                        let predizione = try modello.prediction(ax: mlAx, ay: mlAy, az: mlAz, gx: mlGx, gy: mlGy, gz: mlGz, stateIn: statoMemoria!)
-                        // stateout per avere una idea di quello che stava succedendo nella finestra attuale
-                        statoMemoria = predizione.stateOut
-                        let colpoRilevato = predizione.label
-                        
-                        //print("🎾 PREDIZIONE IA: \(colpoRilevato)")
-                        let colpoPulito = colpoRilevato.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                }
+
+                // SECONDO PASSO: SLIDING WINDOW (finestra scorrevole).
+                //
+                // Cos'è: invece di dividere il segnale in blocchi separati e consecutivi da 100
+                // campioni (tumbling window), faccio "scorrere" una finestra di 100 campioni lungo
+                // tutto il segnale, spostandola ogni volta di uno STEP più piccolo della finestra.
+                // Le finestre quindi si SOVRAPPONGONO (overlap).
+                //
+                // Perché la preferisco al tumbling window: un colpo di padel (dritto/rovescio) è un
+                // evento breve e impulsivo. Con le finestre non sovrapposte rischio che un colpo cada
+                // "a cavallo" tra due blocchi e non venga mai catturato bene da nessuno dei due.
+                // Con l'overlap ogni istante del segnale finisce in più finestre, quindi è molto più
+                // probabile che almeno una finestra contenga il colpo intero e ben centrato.
+                //
+                // Scelta dei parametri: finestra = 100 campioni (2 sec a 50Hz, resta invariata perché
+                // è la dimensione richiesta dal modello). STEP = 50 campioni (1 sec), quindi overlap
+                // del 50%. È un buon compromesso: sufficiente a non "perdere" colpi tra due finestre,
+                // ma non così alto (es. step 10) da fare troppe predizioni ravvicinate, rallentare
+                // l'elaborazione e moltiplicare i doppi conteggi.
+                let dimensioneFinestra = 100
+                let step = 50 // overlap del 50%
+
+                // Debounce/cooldown: siccome le finestre si sovrappongono, lo STESSO colpo reale può
+                // ricadere in 2-3 finestre di fila e generare predizioni identiche consecutive.
+                // Per non contarlo più volte, ignoro una predizione se è uguale alla precedente ed è
+                // arrivata troppo "vicina" nel tempo. Traduco il cooldown in numero di campioni:
+                // 100 campioni = 2 sec, cioè richiedo che tra due colpi identici passi almeno una
+                // finestra intera prima di ricontarli.
+                let cooldownCampioni = 100
+                var ultimoColpo = ""
+                var indiceUltimoColpo = -cooldownCampioni // così il primissimo colpo viene sempre contato
+
+                // faccio scorrere l'inizio della finestra da 0 in avanti, di "step" alla volta,
+                // finché la finestra da 100 campioni ci sta ancora dentro il segnale
+                var inizio = 0
+                while inizio + dimensioneFinestra <= bloccoAx.count {
+                    let fine = inizio + dimensioneFinestra
+                    // ritaglio la porzione (slice) di 100 campioni per ogni asse
+                    let finestraAx = Array(bloccoAx[inizio..<fine])
+                    let finestraAy = Array(bloccoAy[inizio..<fine])
+                    let finestraAz = Array(bloccoAz[inizio..<fine])
+                    let finestraGx = Array(bloccoGx[inizio..<fine])
+                    let finestraGy = Array(bloccoGy[inizio..<fine])
+                    let finestraGz = Array(bloccoGz[inizio..<fine])
+
+                    guard let mlAx = creaMultiArray(da: finestraAx), let mlAy = creaMultiArray(da: finestraAy),
+                          let mlAz = creaMultiArray(da: finestraAz), let mlGx = creaMultiArray(da: finestraGx),
+                          let mlGy = creaMultiArray(da: finestraGy), let mlGz = creaMultiArray(da: finestraGz) else {
+                        inizio += step
+                        continue
+                    }
+                    // Mantengo stateIn/stateOut: il modello è lo stesso LSTM di prima e la sua
+                    // firma richiede questi parametri, quindi continuo a passare lo stato e a
+                    // ricevere quello aggiornato per la finestra successiva. La differenza rispetto
+                    // a prima è solo COME scelgo le finestre (scorrevoli con overlap invece che
+                    // consecutive), non il modello.
+                    let predizione = try modello.prediction(ax: mlAx, ay: mlAy, az: mlAz, gx: mlGx, gy: mlGy, gz: mlGz, stateIn: statoMemoria!)
+                    statoMemoria = predizione.stateOut
+                    let colpoRilevato = predizione.label
+
+                    // Applico il debounce: conto il colpo solo se è diverso dal precedente
+                    // OPPURE se è passato abbastanza tempo (campioni) dall'ultimo colpo uguale.
+                    let colpoValido = (colpoRilevato != ultimoColpo) || (inizio - indiceUltimoColpo >= cooldownCampioni)
+                    if colpoValido {
                         if colpoRilevato == "dritto" { drittoLocali += 1 }
                         else if colpoRilevato == "rovescio" { rovescioLocali += 1 }
                         totaliLocali += 1
-                        
+
                         DispatchQueue.main.async {
                             self.conteggioColpi[colpoRilevato, default: 0] += 1
                             self.colpiTotali += 1
                         }
-                        // svuoto blocchi, in quanto non necessari per lstm
-                        bloccoAx.removeAll(); bloccoAy.removeAll(); bloccoAz.removeAll()
-                        bloccoGx.removeAll(); bloccoGy.removeAll(); bloccoGz.removeAll()
+
+                        ultimoColpo = colpoRilevato
+                        indiceUltimoColpo = inizio
                     }
+
+                    // avanzo la finestra di uno step (non di 100): è questo che crea l'overlap
+                    inizio += step
                 }
                 
                 // Salvataggio nello storico usando il modello dati, si usa il thread principale in quanto le varibaili published possono essere modificate solo da quel thread
