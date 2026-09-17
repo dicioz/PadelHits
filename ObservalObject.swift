@@ -70,8 +70,7 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
                 print("File salvato con successo su iPhone in: \(urlDestinazione.path)")
                 
                 var statoMemoria = try? MLMultiArray(shape: [400], dataType: .double)
-                // Ora questi array NON vengono più svuotati ogni 100 campioni:
-                // raccolgono TUTTI i campioni del CSV, così dopo posso farci scorrere sopra la finestra.
+                // raccolgono i campioni del CSV, così dopo posso farci scorrere sopra la finestra.
                 var bloccoAx = [Double](); var bloccoAy = [Double](); var bloccoAz = [Double]()
                 var bloccoGx = [Double](); var bloccoGy = [Double](); var bloccoGz = [Double]()
                 
@@ -105,13 +104,12 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
                     }
                 }
                 
-                // Contatori locali allineati alla tua SessionCard
+                // Contatori locali allineati alla SessionCard
                 var drittoLocali = 0
                 var rovescioLocali = 0
                 var totaliLocali = 0
 
-                // PRIMO PASSO: leggo tutte le righe del CSV e riempio i blocchi con TUTTI i campioni.
-                // (Prima invece svuotavo i blocchi ogni 100 campioni; ora mi servono interi per la sliding window.)
+                //  leggo tutte le righe del CSV e riempio i blocchi con tutti i campioni.
                 for i in 1..<righe.count {
                     let rigaCorrente = righe[i]
                     if rigaCorrente.isEmpty { continue }
@@ -127,33 +125,13 @@ class ConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
                     }
                 }
 
-                // SECONDO PASSO: SLIDING WINDOW (finestra scorrevole).
-                //
-                // Cos'è: invece di dividere il segnale in blocchi separati e consecutivi da 100
-                // campioni (tumbling window), faccio "scorrere" una finestra di 100 campioni lungo
-                // tutto il segnale, spostandola ogni volta di uno STEP più piccolo della finestra.
-                // Le finestre quindi si SOVRAPPONGONO (overlap).
-                //
-                // Perché la preferisco al tumbling window: un colpo di padel (dritto/rovescio) è un
-                // evento breve e impulsivo. Con le finestre non sovrapposte rischio che un colpo cada
-                // "a cavallo" tra due blocchi e non venga mai catturato bene da nessuno dei due.
-                // Con l'overlap ogni istante del segnale finisce in più finestre, quindi è molto più
-                // probabile che almeno una finestra contenga il colpo intero e ben centrato.
-                //
-                // Scelta dei parametri: finestra = 100 campioni (2 sec a 50Hz, resta invariata perché
-                // è la dimensione richiesta dal modello). STEP = 50 campioni (1 sec), quindi overlap
-                // del 50%. È un buon compromesso: sufficiente a non "perdere" colpi tra due finestre,
-                // ma non così alto (es. step 10) da fare troppe predizioni ravvicinate, rallentare
-                // l'elaborazione e moltiplicare i doppi conteggi.
+                // inizio sliding window
                 let dimensioneFinestra = 100
                 let step = 50 // overlap del 50%
 
-                // Debounce/cooldown: siccome le finestre si sovrappongono, lo STESSO colpo reale può
-                // ricadere in 2-3 finestre di fila e generare predizioni identiche consecutive.
-                // Per non contarlo più volte, ignoro una predizione se è uguale alla precedente ed è
-                // arrivata troppo "vicina" nel tempo. Traduco il cooldown in numero di campioni:
-                // 100 campioni = 2 sec, cioè richiedo che tra due colpi identici passi almeno una
-                // finestra intera prima di ricontarli.
+            
+                // ignoro una predizione se è uguale alla precedente ed è arrivata troppo "vicina" nel tempo. Traduco il cooldown in numero di campioni:
+                // richiedo che tra due colpi identici passi almeno una finestra intera prima di ricontarli.
                 let cooldownCampioni = 100
                 var ultimoColpo = ""
                 var indiceUltimoColpo = -cooldownCampioni // così il primissimo colpo viene sempre contato
